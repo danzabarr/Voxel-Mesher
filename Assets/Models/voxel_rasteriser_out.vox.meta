@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: faa0b37cef6cf204c90c808d8c047803
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: b1f0ad3d708684145bec8253c70f8a87, type: 3}
+  anchor: {x: 0, y: 0, z: 0}
+  position: {x: 0, y: 0, z: 0}
+  rotation: {x: 0, y: 0, z: 0}
+  scale: {x: 1, y: 1, z: 1}
+  meshIndexFormat: 1
+  colliderType: 0
+  importData: 1
+  createMaterial: 1
+  defaultMaterial: {fileID: 2100000, guid: fd2efa615e4ae4649b78042a9809a889, type: 2}
+  defaultPaletteTexture: {fileID: 2800000, guid: b9907c766ac064c4aae37b33f853694d, type: 3}

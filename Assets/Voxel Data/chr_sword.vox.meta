@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c16d447334fadaa4e8593040fbe2b305
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: b1f0ad3d708684145bec8253c70f8a87, type: 3}
+  anchor: {x: 0.5, y: 0.5, z: 0}
+  position: {x: 0, y: 0, z: 0}
+  rotation: {x: -90, y: 0, z: 0}
+  scale: {x: -0.0625, y: 0.0625, z: 0.0625}
+  meshIndexFormat: 1
+  colliderType: 3
+  importData: 1
+  createMaterial: 1
