@@ -9350,6 +9350,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: {x: 64, y: 64, z: 64}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  queryTriggerInteraction: 0
+  color: 1
+  path: Assets/Voxel Data/voxel_rasteriser_out.vox
   voxels:
   - x: 0
     y: 9
@@ -70031,12 +70037,6 @@ MonoBehaviour:
     y: 33
     z: 46
     i: 1
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  queryTriggerInteraction: 0
-  color: 1
-  path: Assets/Models/voxel_rasteriser_out.vox
 --- !u!4 &293587550
 Transform:
   m_ObjectHideFlags: 0
@@ -77178,6 +77178,10 @@ PrefabInstance:
     - target: {fileID: 2440560337824679454, guid: 52aec6a4347451447933d639efa3ec07, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3859639960451928890, guid: 52aec6a4347451447933d639efa3ec07, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 15.96
       objectReference: {fileID: 0}
     - target: {fileID: 6428966756157083176, guid: 52aec6a4347451447933d639efa3ec07, type: 3}
       propertyPath: m_IsActive
@@ -85165,6 +85169,63 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 805233105}
   m_Mesh: {fileID: 214710432}
+--- !u!1001 &807471726
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -4681399520815036606, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_Name
+      value: pillar
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.537283
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 23.0002
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296125920644631112, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: -4216948427090074523, guid: 620d37bc9f443e24b98bf907ec695359, type: 3}
 --- !u!43 &812588668
 Mesh:
   m_ObjectHideFlags: 0
@@ -85823,6 +85884,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -8396364873734503302, guid: c16d447334fadaa4e8593040fbe2b305, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -18.73
+      objectReference: {fileID: 0}
     - target: {fileID: 1212654103347192687, guid: c16d447334fadaa4e8593040fbe2b305, type: 3}
       propertyPath: m_LocalPosition.x
       value: 26.5
@@ -129117,6 +129182,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: {x: 16, y: 16, z: 16}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  queryTriggerInteraction: 0
+  color: 1
+  path: Assets/Models/voxel_rasteriser_out.vox
   voxels:
   - x: 0
     y: 4
@@ -131762,12 +131833,6 @@ MonoBehaviour:
     y: 5
     z: 11
     i: 1
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  queryTriggerInteraction: 0
-  color: 1
-  path: Assets/Models/voxel_rasteriser_out.vox
 --- !u!4 &2083335601
 Transform:
   m_ObjectHideFlags: 0
@@ -133954,3 +134019,4 @@ SceneRoots:
   - {fileID: 2083335601}
   - {fileID: 87553528}
   - {fileID: 331236791}
+  - {fileID: 807471726}

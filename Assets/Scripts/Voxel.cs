@@ -19,107 +19,20 @@ public struct Voxel
         this.i = i;
     }
 
-    public delegate bool Traversal(Vector3Int pos, int index, Vector3Int normal, float distance, int steps);
-
-    public static void Traverse(Ray ray, Dictionary<Vector3Int, int> voxels, Vector3Int size, Traversal traversal)
+    public class Map : Dictionary<Vector3Int, int>
     {
-        Vector3 voxelSize = new Vector3(1, 1, 1);
-        Vector3 voxelOffset = new Vector3(0, 0, 0);
-        Vector3 origin = ray.origin;    
-        Vector3 direction = ray.direction;
-
-        Vector3 currentPosition = origin;
-        Vector3Int currentVoxel = new Vector3Int
-        (
-            Mathf.FloorToInt((currentPosition.x - voxelOffset.x) / voxelSize.x),
-            Mathf.FloorToInt((currentPosition.y - voxelOffset.y) / voxelSize.y),
-            Mathf.FloorToInt((currentPosition.z - voxelOffset.z) / voxelSize.z)
-        );
-
-        // Calculate the step direction
-        Vector3Int step = new Vector3Int
-        (
-            direction.x > 0 ? 1 : -1,
-            direction.y > 0 ? 1 : -1,
-            direction.z > 0 ? 1 : -1
-        );
-
-        // Calculate tMax and tDelta
-        Vector3 tMax = new Vector3
-        (
-            ((step.x > 0 ? (currentVoxel.x + 1) : currentVoxel.x) * voxelSize.x + voxelOffset.x - currentPosition.x) / direction.x,
-            ((step.y > 0 ? (currentVoxel.y + 1) : currentVoxel.y) * voxelSize.y + voxelOffset.y - currentPosition.y) / direction.y,
-            ((step.z > 0 ? (currentVoxel.z + 1) : currentVoxel.z) * voxelSize.z + voxelOffset.z - currentPosition.z) / direction.z
-        );
-
-        Vector3 tDelta = new Vector3
-        (
-            voxelSize.x / Mathf.Abs(direction.x),
-            voxelSize.y / Mathf.Abs(direction.y),
-            voxelSize.z / Mathf.Abs(direction.z)
-        );
-
-        int steps = 0;
-        Vector3Int normal = new Vector3Int(0, 0, 0);
-
-        bool insideBounds = false;
-
-        while (true)
+        public Map(IEnumerable<Voxel> data, VoxelData.Filter filter = null)
         {
-            // Visit the voxel
-            //Vector3 intersection = origin + direction * Mathf.Min(tMax.x, tMax.y, tMax.z);
+            if (data == null)
+                throw new System.ArgumentNullException("data");
 
-            bool inside = currentVoxel.x >= 0 && currentVoxel.x < size.x &&
-                            currentVoxel.y >= 0 && currentVoxel.y < size.y &&
-                            currentVoxel.z >= 0 && currentVoxel.z < size.z;
-
-            if (insideBounds && !inside)
-                break;
-
-            insideBounds = inside;
-
-            int index = voxels.GetValueOrDefault(currentVoxel, -1);
-
-            if (index > 0 && traversal.Invoke(currentVoxel, index, normal, Mathf.Min(tMax.x, tMax.y, tMax.z), steps))
-                break;
-
-            // Increment tMax and step to the next voxel
-            if (tMax.x < tMax.y)
-            {
-                if (tMax.x < tMax.z)
-                {
-                    currentVoxel.x += step.x;
-                    tMax.x += tDelta.x;
-                    normal = new Vector3Int(-step.x, 0, 0);
-                }
-                else
-                {
-                    currentVoxel.z += step.z;
-                    tMax.z += tDelta.z;
-                    normal = new Vector3Int(0, 0, -step.z);
-                }
-            }
-            else
-            {
-                if (tMax.y < tMax.z)
-                {
-                    currentVoxel.y += step.y;
-                    tMax.y += tDelta.y;
-                    normal = new Vector3Int(0, -step.y, 0);
-                }
-                else
-                {
-                    currentVoxel.z += step.z;
-                    tMax.z += tDelta.z;
-                    normal = new Vector3Int(0, 0, -step.z);
-                }
-            }
-
-            steps++;
+            foreach (var v in data)
+                if (filter == null || filter(new Vector3Int(v.x, v.y, v.z), v.i))
+                    this[new Vector3Int(v.x, v.y, v.z)] = v.i;
         }
     }
 
-    public static Mesh Mesh(Dictionary<Vector3Int, int> voxels, Matrix4x4 transform, IndexFormat indexFormat = IndexFormat.UInt32)
+    public static Mesh Mesh(List<Voxel> voxels, Matrix4x4 transform = default, VoxelData.Filter filter = null, IndexFormat indexFormat = IndexFormat.UInt32)
     {
         List<Vector3> vertices = new List<Vector3>();
         List<int> triangles = new List<int>();
@@ -136,13 +49,86 @@ public struct Voxel
             )
         ) < 0;
 
-        Dictionary<int, Dictionary<Vector2Int, int>> northFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
-        Dictionary<int, Dictionary<Vector2Int, int>> southFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
-        Dictionary<int, Dictionary<Vector2Int, int>> eastFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
-        Dictionary<int, Dictionary<Vector2Int, int>> westFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
+        // Insert voxels into a map, applying the filter.
+        Map map = new Map(voxels, filter);
+
+        // The faces for each direction are represented as a dictionary of slices,
+        // where each slice is a index key to a dictionary of 2D positions and color indexes.
+        Dictionary<int, Dictionary<Vector2Int, int>> forwardFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
+        Dictionary<int, Dictionary<Vector2Int, int>> backFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
+        Dictionary<int, Dictionary<Vector2Int, int>> rightFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
+        Dictionary<int, Dictionary<Vector2Int, int>> leftFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
         Dictionary<int, Dictionary<Vector2Int, int>> upFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
         Dictionary<int, Dictionary<Vector2Int, int>> downFaces = new Dictionary<int, Dictionary<Vector2Int, int>>();
 
+        // Iterate over the filtered voxels and generate faces.
+        foreach (KeyValuePair<Vector3Int, int> voxel in map)
+        {
+            Vector3Int p = voxel.Key;
+            int colorIndex = voxel.Value;
+
+            Vector3Int forward = p + Vector3Int.forward;
+            Vector3Int back = p + Vector3Int.back;
+            Vector3Int right = p + Vector3Int.right;
+            Vector3Int left = p + Vector3Int.left;
+            Vector3Int up = p + Vector3Int.up;
+            Vector3Int down = p + Vector3Int.down;
+
+            // We only need generate a face if the neighbouring voxel in that direction is empty.
+
+            if (!map.TryGetValue(forward, out int color) || color <= 0)
+            {
+                if (!forwardFaces.ContainsKey(p.z))
+                    forwardFaces[p.z] = new Dictionary<Vector2Int, int>();
+
+                forwardFaces[p.z][new Vector2Int(p.x, p.y)] = colorIndex;
+            }
+
+            if (!map.TryGetValue(back, out color) || color <= 0)
+            {
+                if (!backFaces.ContainsKey(p.z))
+                    backFaces[p.z] = new Dictionary<Vector2Int, int>();
+
+                backFaces[p.z][new Vector2Int(p.x, p.y)] = colorIndex;
+            }
+
+            if (!map.TryGetValue(right, out color) || color <= 0)
+            {
+                if (!rightFaces.ContainsKey(p.x))
+                    rightFaces[p.x] = new Dictionary<Vector2Int, int>();
+
+                rightFaces[p.x][new Vector2Int(p.z, p.y)] = colorIndex;
+            }
+
+            if (!map.TryGetValue(left, out color) || color <= 0)
+            {
+                if (!leftFaces.ContainsKey(p.x))
+                    leftFaces[p.x] = new Dictionary<Vector2Int, int>();
+
+                leftFaces[p.x][new Vector2Int(p.z, p.y)] = colorIndex;
+            }
+
+            if (!map.TryGetValue(up, out color) || color <= 0)
+            {
+                if (!upFaces.ContainsKey(p.y))
+                    upFaces[p.y] = new Dictionary<Vector2Int, int>();
+
+                upFaces[p.y][new Vector2Int(p.x, p.z)] = colorIndex;
+            }
+
+            if (!map.TryGetValue(down, out color) || color <= 0)
+            {
+                if (!downFaces.ContainsKey(p.y))
+                    downFaces[p.y] = new Dictionary<Vector2Int, int>();
+
+                downFaces[p.y][new Vector2Int(p.x, p.z)] = colorIndex;
+            }
+        }
+
+        // Greedy meshing algorithm.
+        // For each slice, we greedily expand and combine faces into larger quads.
+
+        // Function to find the tile with the minimum x and y coordinates in a slice.
         Vector2Int Min(Dictionary<Vector2Int, int> slice)
         {
             Vector2Int min = new Vector2Int(int.MaxValue, int.MaxValue);
@@ -152,29 +138,28 @@ public struct Voxel
             return min;
         }
 
+
         Vector2Int Expand(Dictionary<Vector2Int, int> faces, Vector2Int min, int colorIndex)
         {
             Vector2Int size = new Vector2Int(1, 1);
             faces.Remove(min);  // Remove as we expand
 
             // Expand width (greedy in x direction)
-            for (; faces.TryGetValue(new Vector2Int(min.x + size.x, min.y), out int nextColor) && nextColor == colorIndex; size.x++)
+            for (; faces.TryGetValue(new Vector2Int(min.x + size.x, min.y), out int index) && index == colorIndex; size.x++)
                 faces.Remove(new Vector2Int(min.x + size.x, min.y));  // Remove as we expand
 
             // Expand height (greedy in y direction)
-            bool heightExpansionPossible = true;
-            while (heightExpansionPossible)
+            bool canExpand = true;
+            while (canExpand)
             {
                 for (int x = min.x; x < min.x + size.x; x++)
-                {
-                    if (!faces.TryGetValue(new Vector2Int(x, min.y + size.y), out int nextColorInRow) || nextColorInRow != colorIndex)
+                    if (!faces.TryGetValue(new Vector2Int(x, min.y + size.y), out int index) || index != colorIndex)
                     {
-                        heightExpansionPossible = false;
+                        canExpand = false;
                         break;
                     }
-                }
 
-                if (heightExpansionPossible)
+                if (canExpand)
                 {
                     for (int x = min.x; x < min.x + size.x; x++)
                         faces.Remove(new Vector2Int(x, min.y + size.y));  // Remove as we expand
@@ -186,8 +171,8 @@ public struct Voxel
             return size;
         }
 
-
-        void AddFace(Vector3Int p, Vector2Int size, Vector3Int nrml, Vector3Int right, Vector3Int up, int colorIndex)
+        // Function to add a face to the mesh, given a position, size, normal, right, up and color index.
+        void AddFace(Vector3Int p, Vector2Int size, Vector3Int normal, Vector3Int right, Vector3Int up, int colorIndex)
         {
             int index = vertices.Count;
 
@@ -219,9 +204,9 @@ public struct Voxel
                 triangles.Add(index + 3);
             }
 
-            Vector3 normal = transform.MultiplyVector(nrml);
+            Vector3 transformedNormal = transform.MultiplyVector(normal);
             for (int i = 0; i < 4; i++)
-                normals.Add(normal);
+                normals.Add(transformedNormal);
 
             uvs.Add(new Vector2((colorIndex + 0) / 256.0f, 0));
             uvs.Add(new Vector2((colorIndex + 1) / 256.0f, 0));
@@ -229,68 +214,7 @@ public struct Voxel
             uvs.Add(new Vector2((colorIndex + 0) / 256.0f, 1));
         }
 
-        foreach (KeyValuePair<Vector3Int, int> voxel in voxels)
-        {
-            Vector3Int p = voxel.Key;
-            int colorIndex = voxel.Value;
-
-            Vector3Int north = p + Vector3Int.forward;
-            Vector3Int south = p + Vector3Int.back;
-            Vector3Int east = p + Vector3Int.right;
-            Vector3Int west = p + Vector3Int.left;
-            Vector3Int up = p + Vector3Int.up;
-            Vector3Int down = p + Vector3Int.down;
-
-            if (!voxels.TryGetValue(north, out int northColor) || northColor <= 0)
-            {
-                if (!northFaces.ContainsKey(p.z))
-                    northFaces[p.z] = new Dictionary<Vector2Int, int>();
-
-                northFaces[p.z][new Vector2Int(p.x, p.y)] = colorIndex;
-            }
-
-            if (!voxels.TryGetValue(south, out int southColor) || southColor <= 0)
-            {
-                if (!southFaces.ContainsKey(p.z))
-                    southFaces[p.z] = new Dictionary<Vector2Int, int>();
-
-                southFaces[p.z][new Vector2Int(p.x, p.y)] = colorIndex;
-            }
-
-            if (!voxels.TryGetValue(east, out int eastColor) || eastColor <= 0)
-            {
-                if (!eastFaces.ContainsKey(p.x))
-                    eastFaces[p.x] = new Dictionary<Vector2Int, int>();
-
-                eastFaces[p.x][new Vector2Int(p.z, p.y)] = colorIndex;
-            }
-
-            if (!voxels.TryGetValue(west, out int westColor) || westColor <= 0)
-            {
-                if (!westFaces.ContainsKey(p.x))
-                    westFaces[p.x] = new Dictionary<Vector2Int, int>();
-
-                westFaces[p.x][new Vector2Int(p.z, p.y)] = colorIndex;
-            }
-
-            if (!voxels.TryGetValue(up, out int upColor) || upColor <= 0)
-            {
-                if (!upFaces.ContainsKey(p.y))
-                    upFaces[p.y] = new Dictionary<Vector2Int, int>();
-
-                upFaces[p.y][new Vector2Int(p.x, p.z)] = colorIndex;
-            }
-
-            if (!voxels.TryGetValue(down, out int downColor) || downColor <= 0)
-            {
-                if (!downFaces.ContainsKey(p.y))
-                    downFaces[p.y] = new Dictionary<Vector2Int, int>();
-
-                downFaces[p.y][new Vector2Int(p.x, p.z)] = colorIndex;
-            }
-        }
-
-        foreach (KeyValuePair<int, Dictionary<Vector2Int, int>> slice in northFaces)
+        foreach (KeyValuePair<int, Dictionary<Vector2Int, int>> slice in forwardFaces)
         {
             int fallout = 1000;
             Dictionary<Vector2Int, int> faces = slice.Value;
@@ -306,7 +230,7 @@ public struct Voxel
             }
         }
 
-        foreach (KeyValuePair<int, Dictionary<Vector2Int, int>> slice in southFaces)
+        foreach (KeyValuePair<int, Dictionary<Vector2Int, int>> slice in backFaces)
         {
             int fallout = 1000;
             Dictionary<Vector2Int, int> faces = slice.Value;
@@ -322,7 +246,7 @@ public struct Voxel
             }
         }
 
-        foreach (KeyValuePair<int, Dictionary<Vector2Int, int>> slice in westFaces)
+        foreach (KeyValuePair<int, Dictionary<Vector2Int, int>> slice in leftFaces)
         {
             int fallout = 1000;
             Dictionary<Vector2Int, int> faces = slice.Value;
@@ -338,7 +262,7 @@ public struct Voxel
             }
         }
 
-        foreach (KeyValuePair<int, Dictionary<Vector2Int, int>> slice in eastFaces)
+        foreach (KeyValuePair<int, Dictionary<Vector2Int, int>> slice in rightFaces)
         {
             int fallout = 1000;
             Dictionary<Vector2Int, int> faces = slice.Value;
@@ -386,6 +310,8 @@ public struct Voxel
             }
         }
 
+        // Create a new mesh and assign the vertices, triangles, normals and uvs
+
         Mesh voxelMesh = new Mesh();
         //voxelMesh.Clear();  // Clear the mesh to avoid any existing data
    
@@ -400,8 +326,6 @@ public struct Voxel
         //voxelMesh.RecalculateNormals();
         //voxelMesh.RecalculateTangents();
 
-
         return voxelMesh;
-
     }
 }

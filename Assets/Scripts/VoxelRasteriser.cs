@@ -7,12 +7,11 @@ using UnityEngine;
 public class VoxelRasteriser : MonoBehaviour
 {
     public Vector3Int size = Vector3Int.one;
-    public List<Voxel> voxels = new List<Voxel>();
     public LayerMask layerMask = -1;
     public QueryTriggerInteraction queryTriggerInteraction = QueryTriggerInteraction.UseGlobal;
     public byte color = 1;
-
     public string path = "Assets/Models/voxel_rasteriser_out.vox";
+    public List<Voxel> voxels = new List<Voxel>();
    
     [ContextMenu("Capture")]
     public void Capture()
@@ -81,5 +80,4 @@ public class VoxelRasteriser : MonoBehaviour
     {
         Capture();
     }
-
 }
